@@ -2,6 +2,7 @@
 using System;
 using System.Windows.Forms;
 
+
 namespace ntrbase
 {
     static class Program

@@ -7,9 +7,9 @@ using System.Threading;
 using System.Windows.Forms;
 
 
-namespace ntrbase.Helpers
+namespace ntrbase
 {
-    public class readMemRequest
+    class readMemRequest
     {
         public string fileName;
         public bool isCallback;
