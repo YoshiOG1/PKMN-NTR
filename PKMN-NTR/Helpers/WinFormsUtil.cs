@@ -3,7 +3,7 @@
 /// All code within this class is taken from PKHeX https://github.com/kwsch/PKHeX
 /// with minor modifications
 
-using ntrbase.Sub_forms;
+using pkmn_ntr.Sub_forms;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -11,7 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace ntrbase.Helpers
+namespace pkmn_ntr.Helpers
 {
     public static class WinFormsUtil
     {
@@ -25,10 +25,11 @@ namespace ntrbase.Helpers
                 rawlist = File.ReadAllLines(externalLangPath);
             else
             {
-                object txt = PKHeX.Core.Properties.Resources.ResourceManager.GetObject("lang_" + lang);
-                if (txt == null) return; // Translation file does not exist as a resource; abort this function and don't translate UI.
-                rawlist = ((string)txt).Split(new[] { "\n" }, StringSplitOptions.None);
-                rawlist = rawlist.Select(i => i.Trim()).ToArray(); // Remove trailing spaces
+                return;
+                //object txt = PKHeX.Core.Properties.Resources.ResourceManager.GetObject("lang_" + lang);
+                //if (txt == null) return; // Translation file does not exist as a resource; abort this function and don't translate UI.
+                //rawlist = ((string)txt).Split(new[] { "\n" }, StringSplitOptions.None);
+                //rawlist = rawlist.Select(i => i.Trim()).ToArray(); // Remove trailing spaces
             }
 
             List<string> stringdata = new List<string>();
@@ -168,6 +169,8 @@ namespace ntrbase.Helpers
         public static void PanelScroll(object sender, ScrollEventArgs e)
         {
             var p = sender as Panel;
+            if (e.NewValue < 0)
+                return;
             switch (e.ScrollOrientation)
             {
                 case ScrollOrientation.HorizontalScroll:

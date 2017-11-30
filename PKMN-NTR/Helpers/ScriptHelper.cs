@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace ntrbase.Helpers
+namespace pkmn_ntr.Helpers
 {
     public class ScriptHelper
     {
@@ -26,7 +26,7 @@ namespace ntrbase.Helpers
         {
             Program.ntrClient.sendEmptyPacket(901);
             Program.ntrClient.log("Will be disconnected in 10 seconds to enhance performance.");
-            Program.gCmdWindow.startAutoDisconnect();
+            Program.gCmdWindow.StartAutoDisconnect();
         }
 
         public void bpdis(uint id)

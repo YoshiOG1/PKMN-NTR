@@ -4,7 +4,7 @@ using System.Timers;
 using PKHeX.Core;
 using System.Windows.Forms;
 
-namespace ntrbase.Helpers
+namespace pkmn_ntr.Helpers
 {
     class RemoteControl
     {
@@ -24,6 +24,7 @@ namespace ntrbase.Helpers
         private int hid_pid = 0x10;
         public const int BOXSIZE = 30;
         public const int POKEBYTES = 232;
+        public const int PARTYBYTES = 260;
 
         // Class constructor
         public RemoteControl()
@@ -69,12 +70,12 @@ namespace ntrbase.Helpers
             if (timeout) // If not response, return timeout
             {
                 Report("NTR: Button press failed, try to free buttons");
-                quickbuton(LookupTable.nokey, 250);
+                quickbuton(LookupTable.NoButtons, 250);
                 return false;
             }
             else
             { // Free the buttons
-                buttonByte = BitConverter.GetBytes(LookupTable.nokey);
+                buttonByte = BitConverter.GetBytes(LookupTable.NoButtons);
                 Program.scriptHelper.write(buttonsOff, buttonByte, hid_pid);
                 setTimer(maxtimeout);
                 while (!timeout)
@@ -105,7 +106,7 @@ namespace ntrbase.Helpers
             byte[] buttonByte = BitConverter.GetBytes(key);
             Program.scriptHelper.write(buttonsOff, buttonByte, hid_pid);
             await Task.Delay(time);
-            buttonByte = BitConverter.GetBytes(LookupTable.nokey);
+            buttonByte = BitConverter.GetBytes(LookupTable.NoButtons);
             Program.scriptHelper.write(buttonsOff, buttonByte, hid_pid);
             Report("NTR: Button command sent, no feedback provided");
         }
@@ -128,12 +129,12 @@ namespace ntrbase.Helpers
             if (timeout) // If not response, return timeout
             {
                 Report("NTR: Button press failed, try to free buttons");
-                quickbuton(LookupTable.nokey, 250);
+                quickbuton(LookupTable.NoButtons, 250);
                 return false;
             }
             else
             { // Free the buttons
-                buttonByte = BitConverter.GetBytes(LookupTable.nokey);
+                buttonByte = BitConverter.GetBytes(LookupTable.NoButtons);
                 Program.scriptHelper.write(buttonsOff, buttonByte, hid_pid);
                 setTimer(maxtimeout);
                 while (!timeout)
@@ -156,6 +157,44 @@ namespace ntrbase.Helpers
                     return true;
                 }
             }
+        }
+
+        public async Task ScriptButton(uint key)
+        {
+            Report($"Script: Send button command 0x{key.ToString("X3")}");
+            byte[] buttonByte = BitConverter.GetBytes(key);
+            Program.scriptHelper.write(buttonsOff, buttonByte, hid_pid);
+            await Task.Delay(200);
+            buttonByte = BitConverter.GetBytes(LookupTable.NoButtons);
+            Program.scriptHelper.write(buttonsOff, buttonByte, hid_pid);
+            await Task.Delay(500);
+        }
+
+        public async Task ScriptButtonTimed(uint key, int time)
+        {
+            Report($"Script: Send button command 0x{key.ToString("X3")} during {time} ms");
+            byte[] buttonByte = BitConverter.GetBytes(key);
+            Program.scriptHelper.write(buttonsOff, buttonByte, hid_pid);
+            await Task.Delay(time);
+            buttonByte = BitConverter.GetBytes(LookupTable.NoButtons);
+            Program.scriptHelper.write(buttonsOff, buttonByte, hid_pid);
+            await Task.Delay(500);
+        }
+
+        public async Task ScriptButtonHold(uint key)
+        {
+            Report($"Script: Send and hold button command 0x{key.ToString("X3")}");
+            byte[] buttonByte = BitConverter.GetBytes(key);
+            Program.scriptHelper.write(buttonsOff, buttonByte, hid_pid);
+            await Task.Delay(500);
+        }
+
+        public async Task ScriptButtonRelease()
+        {
+            Report($"Script: Release all buttons");
+            byte[] buttonByte = BitConverter.GetBytes(LookupTable.NoButtons);
+            Program.scriptHelper.write(buttonsOff, buttonByte, hid_pid);
+            await Task.Delay(500);
         }
 
         // Touch Screen Handler
@@ -182,7 +221,7 @@ namespace ntrbase.Helpers
             }
             else
             {  // Free the touch screen
-                buttonByte = BitConverter.GetBytes(LookupTable.notouch);
+                buttonByte = BitConverter.GetBytes(LookupTable.NoTouch);
                 Program.scriptHelper.write(touchscrOff, buttonByte, hid_pid);
                 setTimer(maxtimeout);
                 while (!timeout)
@@ -239,7 +278,7 @@ namespace ntrbase.Helpers
         {
             Report("NTR: Free the touch screen");
             // Get and send hex coordinates
-            byte[] buttonByte = BitConverter.GetBytes(LookupTable.notouch);
+            byte[] buttonByte = BitConverter.GetBytes(LookupTable.NoTouch);
             Program.scriptHelper.write(touchscrOff, buttonByte, hid_pid);
             setTimer(maxtimeout);
             while (!timeout)
@@ -269,7 +308,7 @@ namespace ntrbase.Helpers
             byte[] buttonByte = BitConverter.GetBytes(gethexcoord(Xcoord, Ycoord));
             Program.scriptHelper.write(touchscrOff, buttonByte, hid_pid);
             await Task.Delay(time);
-            buttonByte = BitConverter.GetBytes(LookupTable.notouch);
+            buttonByte = BitConverter.GetBytes(LookupTable.NoTouch);
             Program.scriptHelper.write(touchscrOff, buttonByte, hid_pid);
             Report("NTR: Touch screen command sent, no feedback provided");
         }
@@ -286,7 +325,7 @@ namespace ntrbase.Helpers
         public async void freetouch()
         {
             Report("NTR: Free the touch screen");
-            byte[] buttonByte = BitConverter.GetBytes(LookupTable.notouch);
+            byte[] buttonByte = BitConverter.GetBytes(LookupTable.NoTouch);
             Program.scriptHelper.write(touchscrOff, buttonByte, hid_pid);
             await Task.Delay(100);
             Report("NTR: Touch screen command sent, no feedback provided");
@@ -297,6 +336,44 @@ namespace ntrbase.Helpers
             uint hexX = Convert.ToUInt32(Math.Round(Xvalue * 0xFFF / 319));
             uint hexY = Convert.ToUInt32(Math.Round(Yvalue * 0xFFF / 239));
             return 0x01000000 + hexY * 0x1000 + hexX;
+        }
+
+        public async Task ScriptTouch(int Xvalue, int Yvalue)
+        {
+            Report($"Script: Touch screen at {Xvalue}, {Yvalue}");
+            byte[] touchByte = BitConverter.GetBytes(gethexcoord(Xvalue, Yvalue));
+            Program.scriptHelper.write(touchscrOff, touchByte, hid_pid);
+            await Task.Delay(200);
+            touchByte = BitConverter.GetBytes(LookupTable.NoTouch);
+            Program.scriptHelper.write(touchscrOff, touchByte, hid_pid);
+            await Task.Delay(500);
+        }
+
+        public async Task ScriptTouchTimed(int Xvalue, int Yvalue, int time)
+        {
+            Report($"Script: Touch screen at {Xvalue}, {Yvalue} during {time} ms");
+            byte[] touchByte = BitConverter.GetBytes(gethexcoord(Xvalue, Yvalue));
+            Program.scriptHelper.write(touchscrOff, touchByte, hid_pid);
+            await Task.Delay(time);
+            touchByte = BitConverter.GetBytes(LookupTable.NoTouch);
+            Program.scriptHelper.write(touchscrOff, touchByte, hid_pid);
+            await Task.Delay(500);
+        }
+
+        public async Task ScriptTouchHold(int Xvalue, int Yvalue)
+        {
+            Report($"Script: Touch screen and hold at {Xvalue}, {Yvalue}");
+            byte[] touchByte = BitConverter.GetBytes(gethexcoord(Xvalue, Yvalue));
+            Program.scriptHelper.write(touchscrOff, touchByte, hid_pid);
+            await Task.Delay(500);
+        }
+
+        public async Task ScriptTouchRelease()
+        {
+            Report($"Script: Release touch screen");
+            byte[] touchByte = BitConverter.GetBytes(LookupTable.NoTouch);
+            Program.scriptHelper.write(touchscrOff, touchByte, hid_pid);
+            await Task.Delay(500);
         }
 
         // Control Stick Handler
@@ -324,7 +401,7 @@ namespace ntrbase.Helpers
             }
             else
             { // Free the control stick
-                buttonByte = BitConverter.GetBytes(LookupTable.nostick);
+                buttonByte = BitConverter.GetBytes(LookupTable.NoStick);
                 Program.scriptHelper.write(stickOff, buttonByte, hid_pid);
                 setTimer(maxtimeout);
                 while (!timeout)
@@ -355,7 +432,7 @@ namespace ntrbase.Helpers
             byte[] buttonByte = BitConverter.GetBytes(getstickhex(Xvalue, Yvalue));
             Program.scriptHelper.write(stickOff, buttonByte, hid_pid);
             await Task.Delay(time);
-            buttonByte = BitConverter.GetBytes(LookupTable.nostick);
+            buttonByte = BitConverter.GetBytes(LookupTable.NoStick);
             Program.scriptHelper.write(stickOff, buttonByte, hid_pid);
             Report("NTR: Control Stick command sent, no feedback provided");
         }
@@ -367,6 +444,44 @@ namespace ntrbase.Helpers
             if (hexX >= 0x1000) hexX = 0xFFF;
             if (hexY >= 0x1000) hexY = 0xFFF;
             return 0x01000000 + hexY * 0x1000 + hexX;
+        }
+
+        public async Task ScriptStick(int Xvalue, int Yvalue)
+        {
+            Report($"Script: Move and release the control stick to {Xvalue}, {Yvalue}");
+            byte[] stickByte = BitConverter.GetBytes(getstickhex(Xvalue, Yvalue));
+            Program.scriptHelper.write(stickOff, stickByte, hid_pid);
+            await Task.Delay(200);
+            stickByte = BitConverter.GetBytes(LookupTable.NoStick);
+            Program.scriptHelper.write(stickOff, stickByte, hid_pid);
+            await Task.Delay(500);
+        }
+
+        public async Task ScriptStickTimed(int Xvalue, int Yvalue, int time)
+        {
+            Report($"Script: Move the control stick to {Xvalue}, {Yvalue} during {time} ms");
+            byte[] stickByte = BitConverter.GetBytes(getstickhex(Xvalue, Yvalue));
+            Program.scriptHelper.write(stickOff, stickByte, hid_pid);
+            await Task.Delay(time);
+            stickByte = BitConverter.GetBytes(LookupTable.NoStick);
+            Program.scriptHelper.write(stickOff, stickByte, hid_pid);
+            await Task.Delay(500);
+        }
+
+        public async Task ScriptStickHold(int Xvalue, int Yvalue)
+        {
+            Report($"Script: Move and hold the control stick to {Xvalue}, {Yvalue}");
+            byte[] stickByte = BitConverter.GetBytes(getstickhex(Xvalue, Yvalue));
+            Program.scriptHelper.write(stickOff, stickByte, hid_pid);
+            await Task.Delay(500);
+        }
+
+        public async Task ScriptStickRelease()
+        {
+            Report($"Script: Release the control stick");
+            byte[] stickByte = BitConverter.GetBytes(LookupTable.NoStick);
+            Program.scriptHelper.write(stickOff, stickByte, hid_pid);
+            await Task.Delay(500);
         }
 
         // Memory Read Handler
@@ -388,7 +503,7 @@ namespace ntrbase.Helpers
             Report("NTR: Read data at address 0x" + address.ToString("X8"));
             lastRead = 0;
             DataReadyWaiting myArgs = new DataReadyWaiting(new byte[0x04], handleMemoryRead, null);
-            Program.gCmdWindow.addwaitingForData(Program.scriptHelper.data(address, 0x04, pid), myArgs);
+            Program.gCmdWindow.AddWaitingForData(Program.scriptHelper.data(address, 0x04, pid), myArgs);
             setTimer(maxtimeout);
             while (!timeout)
             {
@@ -414,7 +529,7 @@ namespace ntrbase.Helpers
             Report("NTR: Read " + size + " bytes of data starting at address 0x" + address.ToString("X8"));
             lastmultiread = new byte[] { };
             DataReadyWaiting myArgs = new DataReadyWaiting(new byte[size], handlemulitMemoryRead, null);
-            Program.gCmdWindow.addwaitingForData(Program.scriptHelper.data(address, size, pid), myArgs);
+            Program.gCmdWindow.AddWaitingForData(Program.scriptHelper.data(address, size, pid), myArgs);
             setTimer(maxtimeout);
             while (!timeout)
             {
@@ -441,11 +556,11 @@ namespace ntrbase.Helpers
             DataReadyWaiting args = (DataReadyWaiting)args_obj;
             if (Program.gCmdWindow.SAV.Generation == 6)
             {
-                validator = new PK6(PKX.decryptArray(args.data));
+                validator = new PK6(PKX.DecryptArray(args.data));
             }
             else
             {
-                validator = new PK7(PKX.decryptArray(args.data));
+                validator = new PK7(PKX.DecryptArray(args.data));
             }
         }
 
@@ -459,8 +574,8 @@ namespace ntrbase.Helpers
                 // Get offset
                 uint dumpOff = Program.gCmdWindow.boxOff + (Convert.ToUInt32(box * BOXSIZE + slot) * POKEBYTES);
                 DataReadyWaiting myArgs = new DataReadyWaiting(new byte[POKEBYTES], handlePokeRead, null);
-                Program.gCmdWindow.updateDumpBoxes(box, slot);
-                Program.gCmdWindow.addwaitingForData(Program.scriptHelper.data(dumpOff, POKEBYTES, pid), myArgs);
+                Program.gCmdWindow.UpdateDumpBoxes(box, slot);
+                Program.gCmdWindow.AddWaitingForData(Program.scriptHelper.data(dumpOff, POKEBYTES, pid), myArgs);
                 setTimer(maxtimeout);
                 while (!timeout)
                 {
@@ -479,7 +594,7 @@ namespace ntrbase.Helpers
                 { // Valid pokemon
                     NTRtimer.Stop();
                     lastRead = validator.Checksum;
-                    Program.gCmdWindow.populateFields(validator);
+                    Program.gCmdWindow.Pokemon = validator;
                     Report("NTR: Read sucessful - PID 0x" + validator.PID.ToString("X8"));
                     return validator;
                 }
@@ -511,7 +626,7 @@ namespace ntrbase.Helpers
             {
                 Report("NTR: Read pokémon data at offset 0x" + offset.ToString("X8"));
                 DataReadyWaiting myArgs = new DataReadyWaiting(new byte[POKEBYTES], handlePokeRead, null);
-                Program.gCmdWindow.addwaitingForData(Program.scriptHelper.data(offset, POKEBYTES, pid), myArgs);
+                Program.gCmdWindow.AddWaitingForData(Program.scriptHelper.data(offset, POKEBYTES, pid), myArgs);
                 setTimer(maxtimeout);
                 while (!timeout)
                 {
@@ -530,6 +645,7 @@ namespace ntrbase.Helpers
                 { // Valid pokemon
                     NTRtimer.Stop();
                     lastRead = validator.Checksum;
+                    Program.gCmdWindow.Pokemon = validator;
                     Report("NTR: Read sucessful - PID 0x" + validator.PID.ToString("X8"));
                     return validator;
                 }
@@ -555,14 +671,14 @@ namespace ntrbase.Helpers
             }
         }
 
-        public async Task<long> waitPartyRead(uint partyOff, int slot)
+        public async Task<PKM> waitPartyRead(uint slot)
         {
             try
             {
-                Report("NTR: Read pokémon data at party slot " + (slot + 1));
-                uint dumpOff = Program.gCmdWindow.partyOff + Convert.ToUInt32(slot * 484);
-                DataReadyWaiting myArgs = new DataReadyWaiting(new byte[POKEBYTES], handlePokeRead, null);
-                Program.gCmdWindow.addwaitingForData(Program.scriptHelper.data(dumpOff, POKEBYTES, pid), myArgs);
+                Report("NTR: Read pokémon data at party slot " + slot);
+                DataReadyWaiting myArgs = new DataReadyWaiting(new byte[PARTYBYTES], handlePokeRead, null);
+                uint offset = Program.gCmdWindow.partyOff + 484 * (slot - 1);
+                Program.gCmdWindow.AddWaitingForData(Program.scriptHelper.data(offset, PARTYBYTES, pid), myArgs);
                 setTimer(maxtimeout);
                 while (!timeout)
                 {
@@ -573,24 +689,29 @@ namespace ntrbase.Helpers
                     }
                 }
                 if (timeout)
-                {
+                { // No read
                     Report("NTR: Read failed");
-                    return -2;
+                    return null;
                 }
-                else if (validator.Species > 0 && validator.Species <= Program.gCmdWindow.MAXSPECIES)
-                {
+                if (validator.ChecksumValid && validator.Species > 0 && validator.Species <= Program.gCmdWindow.MAXSPECIES)
+                { // Valid pokemon
                     NTRtimer.Stop();
-                    lastRead = (uint)validator.Species;
-                    Program.gCmdWindow.pkm.Data = validator.Data;
-                    //Program.gCmdWindow.updateTabs();
+                    lastRead = validator.Checksum;
+                    Program.gCmdWindow.Pokemon = validator;
                     Report("NTR: Read sucessful - PID 0x" + validator.PID.ToString("X8"));
-                    return validator.PID;
+                    return validator;
                 }
-                else // Empty slot
-                {
+                else if (validator.ChecksumValid && validator.Species == 0)
+                { // Empty slot
                     NTRtimer.Stop();
                     Report("NTR: Empty pokémon data");
-                    return -1;
+                    return Program.gCmdWindow.SAV.BlankPKM;
+                }
+                else
+                { // Invalid pokémon
+                    NTRtimer.Stop();
+                    Report("NTR: Invalid pokémon data");
+                    return null;
                 }
             }
             catch (Exception ex)
@@ -598,7 +719,7 @@ namespace ntrbase.Helpers
                 NTRtimer.Stop();
                 Report("NTR: Read failed with exception:");
                 Report(ex.Message);
-                return -2; // No data received
+                return null; // No data received
             }
         }
 
@@ -608,7 +729,7 @@ namespace ntrbase.Helpers
             Report("NTR: Expected value 0x" + value.ToString("X8") + " to 0x" + (value + range - 1).ToString("X8"));
             lastRead = value + range;
             DataReadyWaiting myArgs = new DataReadyWaiting(new byte[0x04], handleMemoryRead, null);
-            Program.gCmdWindow.addwaitingForData(Program.scriptHelper.data(address, 0x04, pid), myArgs);
+            Program.gCmdWindow.AddWaitingForData(Program.scriptHelper.data(address, 0x04, pid), myArgs);
             setTimer(maxtimeout);
             while (!timeout)
             {
@@ -649,7 +770,7 @@ namespace ntrbase.Helpers
             { // Ask for data
                 lastRead = value + range;
                 DataReadyWaiting myArgs = new DataReadyWaiting(new byte[0x04], handleMemoryRead, null);
-                Program.gCmdWindow.addwaitingForData(Program.scriptHelper.data(address, 0x04, pid), myArgs);
+                Program.gCmdWindow.AddWaitingForData(Program.scriptHelper.data(address, 0x04, pid), myArgs);
                 // Wait for data
                 while (!timeout)
                 {

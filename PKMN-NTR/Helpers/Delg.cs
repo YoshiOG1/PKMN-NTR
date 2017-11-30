@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
 using System.Windows.Forms;
 
-namespace ntrbase.Helpers
+namespace pkmn_ntr.Helpers
 {
     public static class Delg
     {
@@ -193,6 +193,12 @@ namespace ntrbase.Helpers
         }
 
         #endregion NumericUpDown
+
+        #region ListBox
+
+
+
+        #endregion ListBox
 
         #region RadioButton
 

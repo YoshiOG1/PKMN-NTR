@@ -4,17 +4,17 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using ntrbase.Helpers;
+using pkmn_ntr.Helpers;
 using PKHeX.Core;
 
-namespace ntrbase.Sub_forms
+namespace pkmn_ntr.Sub_forms
 {
     public partial class Edit_Items : Form
     {
         public Edit_Items()
         {
             InitializeComponent();
-            itemlist = GameInfo.Strings.getItemStrings(SAV.Generation, SAV.Version);
+            itemlist = GameInfo.Strings.GetItemStrings(SAV.Generation, SAV.Version);
 
             for (int i = 0; i < itemlist.Length; i++)
                 if (itemlist[i] == "")
@@ -167,7 +167,7 @@ namespace ntrbase.Sub_forms
                         string.Join(", ", incorrectPouch.Select(item => itemlist[item.Index])) +
                         "\r\nIf you save changes, the item(s) will no longer be in the pouch.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
-                pouch.sanitizePouch(false, itemlist.Length - 1);
+                pouch.Sanitize(false, itemlist.Length - 1);
                 getBag(dgv, pouch);
             }
         }
@@ -200,11 +200,12 @@ namespace ntrbase.Sub_forms
                 int c = 0;
                 string item = dgv.Rows[i].Cells[c++].Value.ToString();
                 int itemindex = Array.IndexOf(itemlist, item);
-                if (itemindex <= 0) // Compression of Empty Slots
+                bool roto = pouch.Type == InventoryType.BattleItems && Legal.Pouch_Roto_USUM.Contains((ushort)itemindex);
+
+                if (itemindex <= 0 && !roto) // Compression of Empty Slots
                     continue;
 
-                int itemcnt;
-                int.TryParse(dgv.Rows[i].Cells[c++].Value?.ToString(), out itemcnt);
+                int.TryParse(dgv.Rows[i].Cells[c++].Value?.ToString(), out int itemcnt);
 
                 if (itemcnt > pouch.MaxCount)
                 {
@@ -213,7 +214,7 @@ namespace ntrbase.Sub_forms
                     else
                         itemcnt = pouch.MaxCount; // Cap at pouch maximum
                 }
-                else if (itemcnt <= 0)
+                else if (itemcnt <= 0 && !roto)
                     continue; // ignore item
 
                 pouch.Items[ctr] = new InventoryItem { Index = itemindex, Count = itemcnt };
@@ -337,9 +338,9 @@ namespace ntrbase.Sub_forms
             var p = Pouches[pouch];
             setBag(dgv, p);
             if (sender == mnuSortName)
-                p.sortName(itemlist, reverse: false);
+                p.SortByName(itemlist, reverse: false);
             if (sender == mnuSortNameReverse)
-                p.sortName(itemlist, reverse: true);
+                p.SortByName(itemlist, reverse: true);
             getBag(dgv, p);
         }
         private void sortByCount(object sender, EventArgs e)
@@ -349,17 +350,17 @@ namespace ntrbase.Sub_forms
             var p = Pouches[pouch];
             setBag(dgv, p);
             if (sender == mnuSortCount)
-                p.sortCount(reverse: false);
+                p.SortByCount(reverse: false);
             if (sender == mnuSortCountReverse)
-                p.sortCount(reverse: true);
+                p.SortByCount(reverse: true);
             getBag(dgv, p);
         }
 
         public async Task<bool> writeItems()
         {
-            byte[] data = new byte[LookupTable.itemsSize];
-            Array.Copy(SAV.Data, LookupTable.itemsLocation, data, 0, LookupTable.itemsSize);
-            Task<bool> worker = Program.helper.waitNTRwrite(LookupTable.itemsOff, data, Program.gCmdWindow.pid);
+            byte[] data = new byte[LookupTable.ItemsSize];
+            Array.Copy(SAV.Data, LookupTable.ItemsLocation, data, 0, LookupTable.ItemsSize);
+            Task<bool> worker = Program.helper.waitNTRwrite(LookupTable.ItemsOffset, data, Program.gCmdWindow.pid);
             return await worker;
         }
 
