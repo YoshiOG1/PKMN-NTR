@@ -315,6 +315,11 @@ namespace pkmn_ntr
             Delg.SetEnabled(Tool_Controls, true);
             Delg.SetEnabled(Tools_PokeDigger, true);
             Delg.SetEnabled(resetNoBox, true);
+            if ((SAV.Version == GameVersion.US || SAV.Version == GameVersion.UM) || SAV.Version == GameVersion.SN)
+            {
+                Delg.SetEnabled(ImportSingleBox, true);
+                Delg.SetEnabled(ExportSingleBox, true);
+            }
         }
 
         private void DisableControls()
@@ -330,6 +335,8 @@ namespace pkmn_ntr
             Delg.SetEnabled(Tools_PokeDigger, false);
             Delg.SetEnabled(resetNoBox, false);
             Delg.SetEnabled(Btn_ReloadFields, false);
+            Delg.SetEnabled(ImportSingleBox, false);
+            Delg.SetEnabled(ExportSingleBox, false);
         }
 
         public void Addlog(string l)
@@ -1057,6 +1064,10 @@ namespace pkmn_ntr
                 uint index = ((uint)boxDump.Value - 1) * BOXSIZE + (uint)slotDump.Value - 1;
                 uint offset = boxOff + (index * POKEBYTES);
                 Program.scriptHelper.write(offset, Pokemon.EncryptedBoxData, pid);
+                if(incrementChk.Checked && slotDump.Value < 30)
+                {
+                    slotDump.Value += 1;
+                }
             }
             else if (radioParty.Checked && EnablePartyWrite)
             {
@@ -1488,6 +1499,48 @@ namespace pkmn_ntr
             else
             {
                 radioParty.Tag = new LastBoxSlot { Box = boxDump.Value, Slot = slotDump.Value };
+            }
+        }
+
+        private System.Windows.Forms.Timer gtsDumpTimer;
+
+        private void DumpGTSTimer()
+        {
+            gtsDumpTimer = new System.Windows.Forms.Timer();
+            gtsDumpTimer.Tick += new EventHandler(gtsDumpTimer_Tick);
+            gtsDumpTimer.Interval = 750; // in miliseconds
+            gtsDumpTimer.Start();
+        }
+
+        private void gtsDumpTimer_Tick(object sender, EventArgs e)
+        {
+            if (SAV.Version == GameVersion.US || SAV.Version == GameVersion.UM)
+            {
+                if (GTS_Dump.Checked)
+                {
+                    System.Text.Encoding ascii = System.Text.Encoding.ASCII;
+                    System.Text.Encoding unicode = System.Text.Encoding.Unicode;
+                    
+                    //uint tmpCharGTS;
+
+                    /*
+                    for (uint i = 0; i < 12; i++)
+                    {
+                        tmpCharGTS = Program.ntrClient.sendReadMemPacket(0x30766E94 + (i * 2), 0x2, (uint)pid, System.Windows.Forms.Application.StartupPath + "\\WonderTradeOT.bin");
+
+                    } // */
+
+                    Program.ntrClient.sendReadMemPacket(0x30766E94, 0x18, (uint)pid, System.Windows.Forms.Application.StartupPath + "\\GTSWant.bin");
+                    byte[] GTSWantBytes = System.IO.File.ReadAllBytes(System.Windows.Forms.Application.StartupPath + "\\GTSWant.bin");
+
+                    // Convert bytes to unicode
+                    // = System.Text.Encoding.Convert(ascii, unicode, GTSWantBytes);
+                    char[] GTSWantChars = new char[unicode.GetCharCount(GTSWantBytes, 0, GTSWantBytes.Length)];
+                    unicode.GetChars(GTSWantBytes, 0, GTSWantBytes.Length, GTSWantChars, 0);
+                    string GTSWantString = new string(GTSWantChars);
+
+                    System.IO.File.WriteAllText(System.Windows.Forms.Application.StartupPath + "\\GTSWant-final.txt", GTSWantString);
+                }
             }
         }
 
@@ -2056,6 +2109,53 @@ namespace pkmn_ntr
         }
 
         #endregion Bots  
+
+        private void ImportBoxDialog_FileOk(object sender, CancelEventArgs e)
+        {
+            
+        }
+
+        private void ImportSingleBox_Click(object sender, EventArgs e)
+        {
+            if (ImportBoxDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                System.IO.StreamReader sr = new
+                    System.IO.StreamReader(ImportBoxDialog.FileName);
+                //MessageBox.Show(ImportBoxDialog.InitialDirectory + ImportBoxDialog.FileName);
+                byte[] input;
+
+                input = File.ReadAllBytes(ImportBoxDialog.FileName);
+                if (input.Length == 0x1B30)
+                {
+                    DialogResult dialogr = MessageBox.Show("Are you sure that you want to overwrite Box " + boxDump.Value + " with the selected EK7 binary?  A backup will *not* be made!", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    if (dialogr == DialogResult.Yes)
+                    {
+                        Program.scriptHelper.write(boxOff + (uint)((boxDump.Value - 1) * 6960), input, pid);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("The file is the wrong size.  Try dumping a Box with the Export a Box button.");
+                }
+                sr.Close();
+            }
+        }
+
+        private void ExportBoxDialog_FileOk(object sender, CancelEventArgs e)
+        {
+
+        }
+
+        private void ExportSingleBox_Click(object sender, EventArgs e)
+        {
+            DialogResult dialogr = MessageBox.Show("Dump contents of Box " + boxDump.Value + " to an EK7 binary?", "Confirm Box Dump", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (dialogr == DialogResult.Yes) { 
+                if (ExportBoxDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    Program.scriptHelper.data(boxOff + (uint)((boxDump.Value - 1) * 6960), 6960, pid, ExportBoxDialog.FileName);
+                }
+            }
+        }
     }
 
     //Objects of this class contains an array for data that have been acquired, a delegate function 

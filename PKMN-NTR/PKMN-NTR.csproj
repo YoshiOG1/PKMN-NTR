@@ -80,6 +80,7 @@
     <Reference Include="System.Diagnostics.DiagnosticSource, Version=4.0.2.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\System.Diagnostics.DiagnosticSource.4.4.1\lib\net46\System.Diagnostics.DiagnosticSource.dll</HintPath>
     </Reference>
+    <Reference Include="System.DirectoryServices" />
     <Reference Include="System.Globalization.Calendars, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>packages\System.Globalization.Calendars.4.3.0\lib\net46\System.Globalization.Calendars.dll</HintPath>
     </Reference>
@@ -256,6 +257,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Bot\Bot_Breeding6.resx">
       <DependentUpon>Bot_Breeding6.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Bot\Bot_SoftReset6.resx">
       <DependentUpon>Bot_SoftReset6.cs</DependentUpon>
@@ -1919,16 +1921,15 @@
     <None Include="Resources\warn.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\PKHeX\PKHeX.Core\PKHeX.Core.csproj">
-      <Project>{28054869-cf06-447d-8682-7ae931f2bc46}</Project>
+    <ProjectReference Include="..\..\PKHeX-master\PKHeX.Core\PKHeX.Core.csproj">
+      <Project>{3e4ff740-1fa5-473c-8195-58610e1703e0}</Project>
       <Name>PKHeX.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\PKHeX\PKHeX.WinForms\PKHeX.WinForms.csproj">
+    <ProjectReference Include="..\..\PKHeX-master\PKHeX.WinForms\PKHeX.WinForms.csproj">
       <Project>{d1b91861-a448-4762-a313-c7bc179f4415}</Project>
       <Name>PKHeX.WinForms</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <UsingTask TaskName="CosturaCleanup" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" TaskFactory="CodeTaskFactory">
     <ParameterGroup>
