@@ -95,6 +95,7 @@ namespace pkmn_ntr
         public uint daycare3Off; // Battle Resort Daycare
         public uint daycare4Off; // Battle Resort Daycare
         public uint battleBoxOff;
+        public uint viewingOff;
 
         // Log handling
         public delegate void LogDelegate(string l);
@@ -173,7 +174,7 @@ namespace pkmn_ntr
         private void MainForm_Load(object sender, EventArgs e)
         {
             lb_pkmnntrver.Text = $"{System.Windows.Forms.Application.ProductVersion} ({System.Reflection.Assembly.GetExecutingAssembly().GetName().Version})";
-            lb_pkhexcorever.Text = "17.11.25";
+            lb_pkhexcorever.Text = "18.01.28";
 
             CheckForUpdate();
             host.Text = Settings.Default.IP;
@@ -205,7 +206,7 @@ namespace pkmn_ntr
 
                 // Get latest stable
                 Github = new GitHubClient(new ProductHeaderValue("PKMN-NTR-UpdateCheck"));
-                Release lateststable = await Github.Repository.Release.GetLatest("drgoku282", "PKMN-NTR");
+                Release lateststable = await Github.Repository.Release.GetLatest("YoshiOG1", "PKMN-NTR");
                 int[] verlatest = Array.ConvertAll(lateststable.TagName.Split('.'), int.Parse);
                 AddToLog("GUI: Last stable: " + lateststable.TagName);
 
@@ -548,6 +549,7 @@ namespace pkmn_ntr
                 tradeOff = 0x32A870C8;
                 opponentOff = 0x3254F4AC;
                 partyOff = 0x34195E10;
+                viewingOff = 0x30000298;
             }
             else if (args.info.Contains("momiji") && 
                 args.info.Contains("00040000001b5000")) // Ultra Sun
@@ -563,6 +565,7 @@ namespace pkmn_ntr
                 tradeOff = 0x30000660;
                 opponentOff = 0x0;
                 partyOff = 0x33F7FA44; // Can also be 0x330128E4
+                viewingOff = 0x30000298; // not tested in Ultra Sun
             }
             else if (args.info.Contains("momiji") && 
                 args.info.Contains("00040000001b5100")) // Ultra Moon
@@ -578,6 +581,7 @@ namespace pkmn_ntr
                 tradeOff = 0x30000660;
                 opponentOff = 0x0;
                 partyOff = 0x33F7FA44; // Can also be 0x330128E4
+                viewingOff = 0x30000298;
             }
             else // not a process list or game not found - ignore packet
             {
@@ -1501,7 +1505,7 @@ namespace pkmn_ntr
                 radioParty.Tag = new LastBoxSlot { Box = boxDump.Value, Slot = slotDump.Value };
             }
         }
-
+        /*
         private System.Windows.Forms.Timer gtsDumpTimer;
 
         private void DumpGTSTimer()
@@ -1511,7 +1515,7 @@ namespace pkmn_ntr
             gtsDumpTimer.Interval = 750; // in miliseconds
             gtsDumpTimer.Start();
         }
-
+        
         private void gtsDumpTimer_Tick(object sender, EventArgs e)
         {
             if (SAV.Version == GameVersion.US || SAV.Version == GameVersion.UM)
@@ -1528,7 +1532,7 @@ namespace pkmn_ntr
                     {
                         tmpCharGTS = Program.ntrClient.sendReadMemPacket(0x30766E94 + (i * 2), 0x2, (uint)pid, System.Windows.Forms.Application.StartupPath + "\\WonderTradeOT.bin");
 
-                    } // */
+                    } //
 
                     Program.ntrClient.sendReadMemPacket(0x30766E94, 0x18, (uint)pid, System.Windows.Forms.Application.StartupPath + "\\GTSWant.bin");
                     byte[] GTSWantBytes = System.IO.File.ReadAllBytes(System.Windows.Forms.Application.StartupPath + "\\GTSWant.bin");
@@ -1543,7 +1547,7 @@ namespace pkmn_ntr
                 }
             }
         }
-
+        // */
         // Clone/Delete tab
         private void UpdateMaxCloneDelete(object sender, EventArgs e)
         {
@@ -2155,6 +2159,13 @@ namespace pkmn_ntr
                     Program.scriptHelper.data(boxOff + (uint)((boxDump.Value - 1) * 6960), 6960, pid, ExportBoxDialog.FileName);
                 }
             }
+        }
+
+        private void DumpFromCurrentView_click(object sender, EventArgs e)
+        {
+            DataReadyWaiting myArgs = new DataReadyWaiting(new byte[POKEBYTES], HandlePokemon, null);
+            uint mySeq = Program.scriptHelper.data(viewingOff, POKEBYTES, pid);
+            AddWaitingForData(mySeq, myArgs);
         }
     }
 
